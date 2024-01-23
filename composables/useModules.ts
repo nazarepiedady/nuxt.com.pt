@@ -5,8 +5,6 @@ const iconsMap = {
   CMS: 'i-ph-pencil-duotone',
   CSS: 'i-ph-paint-brush-broad-duotone',
   Database: 'i-ph-database-duotone',
-  Date: 'i-ph-calendar-duotone',
-  Deployment: 'i-ph-cloud-duotone',
   Devtools: 'i-ph-wrench-duotone',
   Ecommerce: 'i-ph-shopping-cart-duotone',
   Extensions: 'i-ph-puzzle-piece-duotone',
@@ -45,11 +43,8 @@ export const useModules = () => {
 
   const route = useRoute()
   const router = useRouter()
-
   const modules = useState<Module[]>('modules', () => [])
   const module = useState<Module>('module', () => ({} as Module))
-
-
 
   // Data fetching
 
@@ -101,7 +96,7 @@ export const useModules = () => {
   // })
 
   const categories = computed<Filter[]>(() => {
-    return [...new Set(modules.value.map(module => module.category))].map(category => ({
+    return Object.keys(iconsMap).map(category => ({
       key: category,
       label: category,
       exactQuery: true,

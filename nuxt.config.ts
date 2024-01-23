@@ -1,5 +1,18 @@
 import { ofetch } from 'ofetch'
 import { logger } from '@nuxt/kit'
+import { isWindows } from 'std-env'
+
+function normalizedDirPath (path?: string) {
+  if (!path || !isWindows) {
+    return path
+  }
+
+  const windowsPath = path.replace(/\\/g, '/')
+  return windowsPath.startsWith('file:///') ? windowsPath : `file:///${windowsPath}`
+}
+
+const docsSourceBase = normalizedDirPath(process.env.NUXT_DOCS_PATH)
+const examplesSourceBase = normalizedDirPath(process.env.NUXT_EXAMPLES_PATH)
 
 const docsSource: any = {
   name: 'nuxt-docs',
@@ -10,9 +23,9 @@ const docsSource: any = {
   prefix: '/1.docs',
   token: process.env.NUXT_GITHUB_TOKEN || ''
 }
-if (process.env.NUXT_DOCS_PATH) {
+if (docsSourceBase) {
   docsSource.driver = 'fs'
-  docsSource.base = process.env.NUXT_DOCS_PATH
+  docsSource.base = docsSourceBase
 }
 
 const examplesSource: any = {
@@ -24,9 +37,9 @@ const examplesSource: any = {
   prefix: '/docs/4.examples',
   token: process.env.NUXT_GITHUB_TOKEN || ''
 }
-if (process.env.NUXT_EXAMPLES_PATH) {
+if (examplesSourceBase) {
   examplesSource.driver = 'fs'
-  examplesSource.base = process.env.NUXT_EXAMPLES_PATH
+  examplesSource.base = examplesSourceBase
 }
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
@@ -44,13 +57,14 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     'nuxt-og-image',
     () => {
-      if (process.env.NUXT_DOCS_PATH) { logger.success(`Using local Nuxt docs from ${process.env.NUXT_DOCS_PATH}`) }
-      if (process.env.NUXT_EXAMPLES_PATH) { logger.success(`Using local Nuxt examples from ${process.env.NUXT_EXAMPLES_PATH}`) }
+      if (docsSourceBase) { logger.success(`Using local Nuxt docs from ${docsSourceBase}`) }
+      if (examplesSourceBase) { logger.success(`Using local Nuxt examples from ${examplesSourceBase}`) }
     }
   ],
   routeRules: {
     // Pre-render
     '/api/search.json': { prerender: true },
+    '/blog/rss.xml': { prerender: true },
     // '/sitemap.xml': { prerender: true },
     '/newsletter': { prerender: true },
     // Redirects
@@ -76,14 +90,15 @@ export default defineNuxtConfig({
     '/docs/examples/experimental': { redirect: '/docs/examples/experimental/wasm', prerender: false },
     '/docs/community': { redirect: '/docs/community/getting-help', prerender: false },
     '/docs/community/nuxt-community': { redirect: '/docs/community/getting-help', prerender: false },
-    '/docs/guide/directory-structure/nuxt.config': { redirect: '/docs/guide/directory-structure/nuxt-config', prerender: false },
+    // '/docs/guide/directory-structure/nuxt.config': { redirect: '/docs/guide/directory-structure/nuxt-config', prerender: false },
     '/enterprise': { redirect: '/enterprise/support', prerender: false }
   },
   nitro: {
     prerender: {
       // failOnError: false
+      // TODO: investigate
       // Ignore weird url from crawler on some modules readme
-      ignore: ['/modules/%3C/span', '/modules/%253C/span']
+      ignore: ['/modules/%3C/span', '/modules/%253C/span', '/docs/getting-started/</span', '/docs/getting-started/%3C/span']
     },
     hooks: {
       'prerender:generate' (route) {
